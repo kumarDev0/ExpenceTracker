@@ -3,17 +3,20 @@ const cors = require('cors');
 const helmet = require('helmet');
 require('dotenv').config();
 
+const authRoutes = require('./routes/authRoutes'); // naya line
+
 const app = express();
 
-// Security middleware — pehle lagao
-app.use(helmet());         // Security headers automatically
+app.use(helmet());
 app.use(cors({
-  origin: 'http://localhost:5173',  // Sirf apna frontend allowed
+  origin: 'http://localhost:5173',
   credentials: true
 }));
-app.use(express.json());   // JSON body parse karna
+app.use(express.json());
 
-// Test route
+// Routes
+app.use('/api/auth', authRoutes); // naya line
+
 app.get('/health', (req, res) => {
   res.json({ status: 'Server chal raha hai!' });
 });
