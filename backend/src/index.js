@@ -4,6 +4,7 @@ const helmet = require('helmet');
 require('dotenv').config();
 
 const authRoutes = require('./routes/authRoutes'); // naya line
+const expenseRoutes = require('./routes/expenseRoutes'); // naya
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes); // naya line
+app.use('/api/expenses', expenseRoutes); // naya
 
 app.get('/health', (req, res) => {
   res.json({ status: 'Server chal raha hai!' });
