@@ -52,14 +52,34 @@ textarea:focus {
   display: none;
 }
 
+/* Login/Register Mobile Fix */
 @media (max-width: 768px) {
-  .desktop-links {
+  .auth-left {
     display: none !important;
   }
-  .desktop-right {
-    display: none !important;
+  .auth-right {
+    flex: 1 !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 100vh !important;
+    padding: 1.5rem !important;
   }
-  .hamburger {
-    display: block !important;
+  .auth-right-register {
+    flex: 1 !important;
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 100vh !important;
+    padding: 1.5rem !important;
+  }
+  .auth-card {
+    margin: 0 !important;
+    padding: 2rem 1.5rem !important;
+    width: 100% !important;
+    max-width: 400px !important;
+    border-radius: 20px !important;
   }
 }

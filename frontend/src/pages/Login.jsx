@@ -28,7 +28,7 @@ const Login = () => {
   return (
     <div style={s.page}>
       {/* Left side — decorative */}
-      <div style={s.left}>
+      <div style={s.left} className="auth-left">
         <div style={s.leftContent}>
           <div style={s.logo}>💰</div>
           <h1 style={s.leftTitle}>ExpenseTracker</h1>
@@ -43,8 +43,8 @@ const Login = () => {
       </div>
 
       {/* Right side — form */}
-      <div style={s.right}>
-        <div style={s.card}>
+      <div style={s.right}  className="auth-right">
+        <div style={s.card} className="auth-card">
           <h2 style={s.title}>Welcome Back 👋</h2>
           <p style={s.subtitle}>Login karke continue karo</p>
 

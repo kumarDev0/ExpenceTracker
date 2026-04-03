@@ -33,7 +33,7 @@ const Register = () => {
   return (
     <div style={s.page}>
       {/* Left side */}
-      <div style={s.left}>
+      <div style={s.left} className="auth-left">
         <div style={s.leftContent}>
           <div style={s.logo}>🚀</div>
           <h1 style={s.leftTitle}>Shuru Karo Aaj Se</h1>
@@ -58,8 +58,8 @@ const Register = () => {
       </div>
 
       {/* Right side */}
-      <div style={s.right}>
-        <div style={s.card}>
+      <div style={s.right}  className="auth-right-register" >
+        <div style={s.card} className="auth-card">
           <h2 style={s.title}>Account Banao 🎯</h2>
           <p style={s.subtitle}>Free mein shuru karo — koi credit card nahi</p>
 
