@@ -1,14 +1,9 @@
-// Dashboard — app ka home page
-// Yahan 2 API calls honge:
-// 1. Summary — category wise totals
-// 2. Recent expenses — last 5
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 
-// Pie chart ke liye colors — ek color per category
 const COLORS = {
   food: '#6366f1',
   transport: '#f59e0b',
@@ -18,82 +13,63 @@ const COLORS = {
   other: '#ef4444'
 };
 
+const categoryEmoji = {
+  food: '🍕', transport: '🚗', entertainment: '🎬',
+  shopping: '🛒', health: '💊', other: '📦'
+};
+
 const Dashboard = () => {
-  // State — loading, error, aur data
   const [summary, setSummary] = useState(null);
   const [recentExpenses, setRecentExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // Component load hone pe data fetch karo
-  // useEffect = "ye kaam tab karo jab component screen pe aaye"
   useEffect(() => {
-    fetchDashboardData();
-  }, []); // [] = sirf ek baar
+    fetchData();
+  }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-
-      // Dono API calls ek saath — parallel mein
-      // Promise.all = dono simultaneously chalao, dono hone ka wait karo
-      // Agar ek ek karte toh zyada time lagta
       const [summaryRes, expensesRes] = await Promise.all([
         api.get('/expenses/summary'),
         api.get('/expenses?sort=date_desc')
       ]);
-
       setSummary(summaryRes.data);
-      // Sirf last 5 dikhao dashboard pe
       setRecentExpenses(expensesRes.data.expenses.slice(0, 5));
-
     } catch (err) {
-      setError('Data load nahi hua — try again');
-      console.error(err);
+      setError('Data load nahi hua');
     } finally {
       setLoading(false);
     }
   };
 
-  // Emoji per category
-  const categoryEmoji = {
-    food: '🍕', transport: '🚗', entertainment: '🎬',
-    shopping: '🛒', health: '💊', other: '📦'
-  };
+  if (loading) return (
+    <>
+      <Navbar />
+      <div style={s.center}>
+        <div style={s.spinner}>⏳</div>
+        <p style={s.loadingText}>Data load ho raha hai...</p>
+      </div>
+    </>
+  );
 
-  // Loading state
-  if (loading) {
-    return (
-      <>
-        <Navbar />
-        <div style={s.center}>Data load ho raha hai...</div>
-      </>
-    );
-  }
+  if (error) return (
+    <>
+      <Navbar />
+      <div style={s.center}>
+        <p style={{ color: '#dc2626', marginBottom: '1rem' }}>{error}</p>
+        <button onClick={fetchData} style={s.retryBtn}>🔄 Try Again</button>
+      </div>
+    </>
+  );
 
-  // Error state
-  if (error) {
-    return (
-      <>
-        <Navbar />
-        <div style={s.center}>
-          <p style={{ color: '#dc2626' }}>{error}</p>
-          <button onClick={fetchDashboardData} style={s.retryBtn}>
-            Try Again
-          </button>
-        </div>
-      </>
-    );
-  }
-
-  // Pie chart ke liye data format
   const pieData = summary?.byCategory?.map(cat => ({
     name: cat.category,
     value: parseFloat(cat.total)
   })) || [];
 
-  // Summary cards ke liye values
   const thisMonthTotal = parseFloat(summary?.thisMonth?.total || 0);
   const thisMonthCount = summary?.thisMonth?.count || 0;
   const topCategory = summary?.byCategory?.[0]?.category || 'N/A';
@@ -106,69 +82,117 @@ const Dashboard = () => {
       <Navbar />
       <div style={s.page}>
 
-        {/* Summary Cards — 4 boxes upar */}
+        {/* Welcome Banner */}
+        <div style={s.banner}>
+          <div>
+            <h2 style={s.bannerTitle}>Namaste! 👋</h2>
+            <p style={s.bannerSub}>Yahan hai tera is mahine ka financial summary</p>
+          </div>
+          <button
+            onClick={() => navigate('/expenses')}
+            style={s.addBtn}
+          >
+            + Expense Add Karo
+          </button>
+        </div>
+
+        {/* Summary Cards */}
         <div style={s.cardGrid}>
-          <div style={{ ...s.card, borderTop: '3px solid #6366f1' }}>
-            <p style={s.cardLabel}>This Month</p>
+          <div style={{ ...s.card, borderTop: '4px solid #6366f1' }}>
+            <p style={s.cardLabel}>💰 This Month</p>
             <p style={s.cardValue}>₹{thisMonthTotal.toLocaleString()}</p>
+            <p style={s.cardSub}>Total kharch</p>
           </div>
-          <div style={{ ...s.card, borderTop: '3px solid #8b5cf6' }}>
-            <p style={s.cardLabel}>Total Expenses</p>
+          <div style={{ ...s.card, borderTop: '4px solid #8b5cf6' }}>
+            <p style={s.cardLabel}>📊 Transactions</p>
             <p style={s.cardValue}>{thisMonthCount}</p>
+            <p style={s.cardSub}>Is mahine</p>
           </div>
-          <div style={{ ...s.card, borderTop: '3px solid #f59e0b' }}>
-            <p style={s.cardLabel}>Top Category</p>
+          <div style={{ ...s.card, borderTop: '4px solid #f59e0b' }}>
+            <p style={s.cardLabel}>🏆 Top Category</p>
             <p style={s.cardValue}>
-              {categoryEmoji[topCategory]} {topCategory}
+              {topCategory !== 'N/A' ? categoryEmoji[topCategory] : ''} {topCategory}
             </p>
+            <p style={s.cardSub}>Sabse zyada kharch</p>
           </div>
-          <div style={{ ...s.card, borderTop: '3px solid #10b981' }}>
-            <p style={s.cardLabel}>Avg Per Day</p>
+          <div style={{ ...s.card, borderTop: '4px solid #10b981' }}>
+            <p style={s.cardLabel}>📅 Daily Average</p>
             <p style={s.cardValue}>₹{avgPerDay}</p>
+            <p style={s.cardSub}>Per day average</p>
           </div>
         </div>
 
-        {/* Bottom section — Chart + Recent */}
+        {/* Bottom Grid */}
         <div style={s.bottomGrid}>
 
           {/* Pie Chart */}
           <div style={s.box}>
-            <h3 style={s.boxTitle}>Category Breakdown</h3>
+            <h3 style={s.boxTitle}>📈 Category Breakdown</h3>
             {pieData.length === 0 ? (
-              <p style={s.empty}>Koi expense nahi abhi tak</p>
+              <div style={s.emptyBox}>
+                <p style={s.emptyText}>Koi expense nahi abhi tak</p>
+                <button
+                  onClick={() => navigate('/expenses')}
+                  style={s.emptyBtn}
+                >
+                  + Pehla Expense Add Karo
+                </button>
+              </div>
             ) : (
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={90}
-                    dataKey="value"
-                    label={({ name, percent }) =>
-                      `${name} ${(percent * 100).toFixed(0)}%`
-                    }
-                  >
-                    {pieData.map((entry) => (
-                      <Cell
-                        key={entry.name}
-                        fill={COLORS[entry.name] || '#888'}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(val) => `₹${val}`} />
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                <ResponsiveContainer width="100%" height={240}>
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={90}
+                      dataKey="value"
+                      label={({ name, percent }) =>
+                        `${name} ${(percent * 100).toFixed(0)}%`
+                      }
+                    >
+                      {pieData.map((entry) => (
+                        <Cell
+                          key={entry.name}
+                          fill={COLORS[entry.name] || '#888'}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(val) => `₹${val.toLocaleString()}`} />
+                  </PieChart>
+                </ResponsiveContainer>
+
+                {/* Category list */}
+                <div style={s.categoryList}>
+                  {summary?.byCategory?.map(cat => (
+                    <div key={cat.category} style={s.categoryRow}>
+                      <div style={s.categoryLeft}>
+                        <div style={{
+                          ...s.colorDot,
+                          background: COLORS[cat.category] || '#888'
+                        }}/>
+                        <span style={s.categoryName}>
+                          {categoryEmoji[cat.category]} {cat.category}
+                        </span>
+                      </div>
+                      <span style={s.categoryAmount}>
+                        ₹{parseFloat(cat.total).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
 
           {/* Recent Expenses */}
           <div style={s.box}>
             <div style={s.boxHeader}>
-              <h3 style={s.boxTitle}>Recent Expenses</h3>
+              <h3 style={s.boxTitle}>🕐 Recent Expenses</h3>
               <button
                 onClick={() => navigate('/expenses')}
-                style={s.seeAll}
+                style={s.seeAllBtn}
               >
                 Sab dekho →
               </button>
@@ -176,39 +200,41 @@ const Dashboard = () => {
 
             {recentExpenses.length === 0 ? (
               <div style={s.emptyBox}>
-                <p style={s.empty}>Koi expense nahi abhi tak</p>
-                <button
-                  onClick={() => navigate('/expenses')}
-                  style={s.addBtn}
-                >
-                  + Pehla Expense Add Karo
-                </button>
+                <p style={s.emptyText}>Abhi tak koi expense nahi</p>
               </div>
             ) : (
-              <>
+              <div style={s.expenseList}>
                 {recentExpenses.map(exp => (
                   <div key={exp.id} style={s.expRow}>
-                    <div style={s.expLeft}>
-                      <span style={s.emoji}>
-                        {categoryEmoji[exp.category]}
-                      </span>
-                      <div>
-                        <p style={s.expTitle}>{exp.title}</p>
-                        <p style={s.expDate}>{exp.date}</p>
-                      </div>
+                    <div style={{
+                      ...s.expIcon,
+                      background: COLORS[exp.category] + '20'
+                    }}>
+                      {categoryEmoji[exp.category]}
                     </div>
-                    <p style={s.expAmount}>₹{parseFloat(exp.amount).toLocaleString()}</p>
+                    <div style={s.expInfo}>
+                      <p style={s.expTitle}>{exp.title}</p>
+                      <p style={s.expMeta}>
+                        {exp.category} · {exp.date?.split('T')[0]}
+                      </p>
+                    </div>
+                    <p style={{
+                      ...s.expAmount,
+                      color: COLORS[exp.category] || '#6366f1'
+                    }}>
+                      ₹{parseFloat(exp.amount).toLocaleString()}
+                    </p>
                   </div>
                 ))}
-
-                <button
-                  onClick={() => navigate('/expenses')}
-                  style={s.addBtn}
-                >
-                  + Expense Add Karo
-                </button>
-              </>
+              </div>
             )}
+
+            <button
+              onClick={() => navigate('/expenses')}
+              style={s.addExpBtn}
+            >
+              + Naya Expense Add Karo
+            </button>
           </div>
         </div>
       </div>
@@ -217,27 +243,226 @@ const Dashboard = () => {
 };
 
 const s = {
-  page: { maxWidth: '1100px', margin: '0 auto', padding: '2rem 1rem' },
-  center: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: '1rem' },
-  cardGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' },
-  card: { background: 'white', padding: '1.25rem', borderRadius: '10px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' },
-  cardLabel: { fontSize: '13px', color: '#888', marginBottom: '8px' },
-  cardValue: { fontSize: '24px', fontWeight: '700', color: '#1f2937' },
-  bottomGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' },
-  box: { background: 'white', padding: '1.5rem', borderRadius: '10px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' },
-  boxHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' },
-  boxTitle: { fontSize: '16px', fontWeight: '600', marginBottom: '1rem' },
-  seeAll: { background: 'none', border: 'none', color: '#6366f1', cursor: 'pointer', fontSize: '13px' },
-  expRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f3f4f6' },
-  expLeft: { display: 'flex', alignItems: 'center', gap: '12px' },
-  emoji: { fontSize: '24px' },
-  expTitle: { fontSize: '14px', fontWeight: '500', marginBottom: '2px' },
-  expDate: { fontSize: '12px', color: '#9ca3af' },
-  expAmount: { fontSize: '15px', fontWeight: '600', color: '#1f2937' },
-  emptyBox: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2rem', gap: '1rem' },
-  empty: { color: '#9ca3af', fontSize: '14px', textAlign: 'center' },
-  addBtn: { width: '100%', marginTop: '16px', padding: '12px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500' },
-  retryBtn: { padding: '8px 20px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }
+  page: {
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '2rem 1.5rem',
+  },
+  center: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '60vh',
+    gap: '1rem',
+  },
+  spinner: { fontSize: '48px' },
+  loadingText: { color: '#64748b', fontSize: '16px' },
+  retryBtn: {
+    padding: '10px 24px',
+    background: '#6366f1',
+    color: 'white',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontSize: '15px',
+  },
+  banner: {
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    borderRadius: '16px',
+    padding: '1.5rem 2rem',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '1.5rem',
+    flexWrap: 'wrap',
+    gap: '1rem',
+  },
+  bannerTitle: {
+    color: 'white',
+    fontSize: '22px',
+    fontWeight: '700',
+    marginBottom: '4px',
+  },
+  bannerSub: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: '14px',
+  },
+  addBtn: {
+    padding: '10px 20px',
+    background: 'white',
+    color: '#6366f1',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+  },
+  cardGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '1rem',
+    marginBottom: '1.5rem',
+  },
+  card: {
+    background: 'white',
+    padding: '1.25rem 1.5rem',
+    borderRadius: '14px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+  },
+  cardLabel: {
+    fontSize: '13px',
+    color: '#64748b',
+    marginBottom: '8px',
+    fontWeight: '500',
+  },
+  cardValue: {
+    fontSize: '26px',
+    fontWeight: '700',
+    color: '#1a1a2e',
+    marginBottom: '4px',
+  },
+  cardSub: {
+    fontSize: '12px',
+    color: '#94a3b8',
+  },
+  bottomGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+    gap: '1.5rem',
+  },
+  box: {
+    background: 'white',
+    padding: '1.5rem',
+    borderRadius: '14px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+  },
+  boxHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '1rem',
+  },
+  boxTitle: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#1a1a2e',
+    marginBottom: '1rem',
+  },
+  seeAllBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#6366f1',
+    cursor: 'pointer',
+    fontSize: '13px',
+    fontWeight: '600',
+  },
+  categoryList: {
+    marginTop: '1rem',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+  categoryRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '8px 0',
+    borderBottom: '1px solid #f1f5f9',
+  },
+  categoryLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  colorDot: {
+    width: '10px',
+    height: '10px',
+    borderRadius: '50%',
+  },
+  categoryName: {
+    fontSize: '14px',
+    color: '#374151',
+    textTransform: 'capitalize',
+  },
+  categoryAmount: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#1a1a2e',
+  },
+  expenseList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    marginBottom: '1rem',
+  },
+  expRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '10px',
+    borderRadius: '10px',
+    background: '#f8fafc',
+  },
+  expIcon: {
+    width: '42px',
+    height: '42px',
+    borderRadius: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '20px',
+    flexShrink: 0,
+  },
+  expInfo: { flex: 1 },
+  expTitle: {
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#1a1a2e',
+    marginBottom: '2px',
+  },
+  expMeta: {
+    fontSize: '12px',
+    color: '#94a3b8',
+    textTransform: 'capitalize',
+  },
+  expAmount: {
+    fontSize: '15px',
+    fontWeight: '700',
+  },
+  emptyBox: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: '2rem',
+    gap: '1rem',
+  },
+  emptyText: {
+    color: '#94a3b8',
+    fontSize: '14px',
+  },
+  emptyBtn: {
+    padding: '10px 20px',
+    background: '#6366f1',
+    color: 'white',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '500',
+  },
+  addExpBtn: {
+    width: '100%',
+    padding: '12px',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+    marginTop: '8px',
+  },
 };
 
 export default Dashboard;

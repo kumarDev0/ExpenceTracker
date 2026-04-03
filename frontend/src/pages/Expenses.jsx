@@ -1,5 +1,3 @@
-// Expenses Page — CRUD ka poora UI
-// Add, Edit, Delete, Filter — sab yahan
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
@@ -11,30 +9,29 @@ const categoryEmoji = {
   shopping: '🛒', health: '💊', other: '📦'
 };
 
-// Aaj ki date default value ke liye
-const today = new Date().toISOString().split('T')[0];
+const COLORS = {
+  food: '#6366f1', transport: '#f59e0b', entertainment: '#8b5cf6',
+  shopping: '#ec4899', health: '#10b981', other: '#ef4444'
+};
 
-// Empty form state — baar baar use hoga
+const today = new Date().toISOString().split('T')[0];
 const emptyForm = { title: '', amount: '', category: 'food', date: today };
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  // Form state
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
-  const [editingId, setEditingId] = useState(null); // null = add mode, id = edit mode
+  const [editingId, setEditingId] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState('');
-
-  // Filter state
   const [filterCategory, setFilterCategory] = useState('');
+  const [deleteId, setDeleteId] = useState(null);
 
   useEffect(() => {
     fetchExpenses();
-  }, [filterCategory]); // filter change hone pe dobara fetch karo
+  }, [filterCategory]);
 
   const fetchExpenses = async () => {
     try {
@@ -49,33 +46,24 @@ const Expenses = () => {
     }
   };
 
-  // Form field change handler
   const handleFormChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    // Spread operator: purane form ki saari values rakho, sirf jo change hua wo update karo
   };
 
-  // Add ya Edit submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
     setFormLoading(true);
-
     try {
       if (editingId) {
-        // Edit mode — PUT request
         await api.put(`/expenses/${editingId}`, form);
       } else {
-        // Add mode — POST request
         await api.post('/expenses', form);
       }
-
-      // Success — form band karo, list refresh karo
       setShowForm(false);
       setForm(emptyForm);
       setEditingId(null);
       fetchExpenses();
-
     } catch (err) {
       setFormError(
         err.response?.data?.errors?.[0]?.msg ||
@@ -87,36 +75,28 @@ const Expenses = () => {
     }
   };
 
-  // Edit button click — form mein data bharo
   const handleEdit = (exp) => {
     setForm({
       title: exp.title,
       amount: exp.amount,
       category: exp.category,
-      date: exp.date.split('T')[0] // Date format fix
+      date: exp.date.split('T')[0]
     });
     setEditingId(exp.id);
     setShowForm(true);
-    // Scroll to form
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Delete button click
   const handleDelete = async (id) => {
-    // Confirm karo — galti se delete na ho
-    if (!window.confirm('Ye expense delete karna chahte ho?')) return;
-
     try {
       await api.delete(`/expenses/${id}`);
-      // List se hatao — API call ki zaroorat nahi
-      // State directly update karo — faster feel hota hai
       setExpenses(expenses.filter(exp => exp.id !== id));
+      setDeleteId(null);
     } catch (err) {
       alert('Delete nahi hua — try again');
     }
   };
 
-  // Cancel button
   const handleCancel = () => {
     setShowForm(false);
     setForm(emptyForm);
@@ -124,7 +104,6 @@ const Expenses = () => {
     setFormError('');
   };
 
-  // Total calculate karo
   const total = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
 
   return (
@@ -135,30 +114,34 @@ const Expenses = () => {
         {/* Header */}
         <div style={s.header}>
           <div>
-            <h2 style={s.title}>Meri Expenses</h2>
+            <h2 style={s.title}>💸 Meri Expenses</h2>
             <p style={s.subtitle}>
               {expenses.length} expenses · Total: ₹{total.toLocaleString()}
             </p>
           </div>
           <button
-            onClick={() => { setShowForm(true); setEditingId(null); setForm(emptyForm); }}
-            style={s.addBtn}
+            onClick={() => {
+              setShowForm(!showForm);
+              setEditingId(null);
+              setForm(emptyForm);
+            }}
+            style={showForm ? s.cancelTopBtn : s.addBtn}
           >
-            + Add Expense
+            {showForm ? '✕ Cancel' : '+ Add Expense'}
           </button>
         </div>
 
-        {/* Add / Edit Form */}
+        {/* Form */}
         {showForm && (
           <div style={s.formBox}>
             <h3 style={s.formTitle}>
-              {editingId ? '✏️ Expense Edit Karo' : '➕ Naya Expense'}
+              {editingId ? '✏️ Expense Edit Karo' : '➕ Naya Expense Add Karo'}
             </h3>
 
-            {formError && <div style={s.err}>{formError}</div>}
+            {formError && <div style={s.formError}>⚠️ {formError}</div>}
 
-            <form onSubmit={handleSubmit} style={s.form}>
-              <div style={s.formRow}>
+            <form onSubmit={handleSubmit}>
+              <div style={s.formGrid}>
                 <div style={s.field}>
                   <label style={s.label}>Title</label>
                   <input
@@ -170,6 +153,7 @@ const Expenses = () => {
                     required
                   />
                 </div>
+
                 <div style={s.field}>
                   <label style={s.label}>Amount (₹)</label>
                   <input
@@ -184,9 +168,7 @@ const Expenses = () => {
                     required
                   />
                 </div>
-              </div>
 
-              <div style={s.formRow}>
                 <div style={s.field}>
                   <label style={s.label}>Category</label>
                   <select
@@ -202,6 +184,7 @@ const Expenses = () => {
                     ))}
                   </select>
                 </div>
+
                 <div style={s.field}>
                   <label style={s.label}>Date</label>
                   <input
@@ -216,10 +199,18 @@ const Expenses = () => {
               </div>
 
               <div style={s.formBtns}>
-                <button type="submit" style={s.saveBtn} disabled={formLoading}>
-                  {formLoading ? 'Saving...' : editingId ? 'Update Karo' : 'Add Karo'}
+                <button
+                  type="submit"
+                  style={s.saveBtn}
+                  disabled={formLoading}
+                >
+                  {formLoading ? '⏳ Saving...' : editingId ? '✓ Update Karo' : '✓ Add Karo'}
                 </button>
-                <button type="button" onClick={handleCancel} style={s.cancelBtn}>
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  style={s.cancelBtn}
+                >
                   Cancel
                 </button>
               </div>
@@ -227,9 +218,8 @@ const Expenses = () => {
           </div>
         )}
 
-        {/* Filter */}
+        {/* Filters */}
         <div style={s.filterRow}>
-          <span style={s.filterLabel}>Filter:</span>
           <button
             onClick={() => setFilterCategory('')}
             style={filterCategory === '' ? s.filterActive : s.filterBtn}
@@ -247,39 +237,112 @@ const Expenses = () => {
           ))}
         </div>
 
-        {/* Expense List */}
+        {/* List */}
         {loading ? (
-          <div style={s.center}>Load ho raha hai...</div>
+          <div style={s.center}>⏳ Load ho raha hai...</div>
         ) : error ? (
           <div style={s.center}>
             <p style={{ color: '#dc2626' }}>{error}</p>
-            <button onClick={fetchExpenses} style={s.addBtn}>Retry</button>
+            <button onClick={fetchExpenses} style={s.retryBtn}>Retry</button>
           </div>
         ) : expenses.length === 0 ? (
-          <div style={s.center}>
-            <p style={{ color: '#9ca3af', fontSize: '16px' }}>
-              {filterCategory ? `${filterCategory} mein koi expense nahi` : 'Koi expense nahi abhi tak'}
+          <div style={s.emptyBox}>
+            <p style={s.emptyEmoji}>🤷</p>
+            <p style={s.emptyText}>
+              {filterCategory
+                ? `${categoryEmoji[filterCategory]} ${filterCategory} mein koi expense nahi`
+                : 'Koi expense nahi abhi tak'}
             </p>
+            {!filterCategory && (
+              <button
+                onClick={() => setShowForm(true)}
+                style={s.addBtn}
+              >
+                + Pehla Expense Add Karo
+              </button>
+            )}
           </div>
         ) : (
           <div style={s.list}>
             {expenses.map(exp => (
-              <div key={exp.id} style={s.expRow}>
-                <span style={s.emoji}>{categoryEmoji[exp.category]}</span>
-
-                <div style={s.expInfo}>
-                  <p style={s.expTitle}>{exp.title}</p>
-                  <p style={s.expMeta}>{exp.category} · {exp.date?.split('T')[0]}</p>
+              <div key={exp.id} style={s.expCard}>
+                {/* Icon */}
+                <div style={{
+                  ...s.expIcon,
+                  background: COLORS[exp.category] + '15'
+                }}>
+                  <span style={{ fontSize: '24px' }}>
+                    {categoryEmoji[exp.category]}
+                  </span>
                 </div>
 
-                <p style={s.expAmount}>₹{parseFloat(exp.amount).toLocaleString()}</p>
+                {/* Info */}
+                <div style={s.expInfo}>
+                  <p style={s.expTitle}>{exp.title}</p>
+                  <div style={s.expMeta}>
+                    <span style={{
+                      ...s.catBadge,
+                      background: COLORS[exp.category] + '15',
+                      color: COLORS[exp.category]
+                    }}>
+                      {exp.category}
+                    </span>
+                    <span style={s.expDate}>
+                      {exp.date?.split('T')[0]}
+                    </span>
+                  </div>
+                </div>
 
+                {/* Amount */}
+                <p style={{
+                  ...s.expAmount,
+                  color: COLORS[exp.category]
+                }}>
+                  ₹{parseFloat(exp.amount).toLocaleString()}
+                </p>
+
+                {/* Actions */}
                 <div style={s.actions}>
-                  <button onClick={() => handleEdit(exp)} style={s.editBtn}>Edit</button>
-                  <button onClick={() => handleDelete(exp.id)} style={s.deleteBtn}>Delete</button>
+                  <button
+                    onClick={() => handleEdit(exp)}
+                    style={s.editBtn}
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => setDeleteId(exp.id)}
+                    style={s.deleteBtn}
+                  >
+                    🗑️
+                  </button>
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Delete Confirm Modal */}
+        {deleteId && (
+          <div style={s.modalOverlay}>
+            <div style={s.modal}>
+              <p style={s.modalEmoji}>🗑️</p>
+              <h3 style={s.modalTitle}>Delete karna chahte ho?</h3>
+              <p style={s.modalSub}>Ye action undo nahi ho sakta</p>
+              <div style={s.modalBtns}>
+                <button
+                  onClick={() => handleDelete(deleteId)}
+                  style={s.modalDelete}
+                >
+                  Haan, Delete Karo
+                </button>
+                <button
+                  onClick={() => setDeleteId(null)}
+                  style={s.modalCancel}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -288,37 +351,311 @@ const Expenses = () => {
 };
 
 const s = {
-  page: { maxWidth: '900px', margin: '0 auto', padding: '2rem 1rem' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' },
-  title: { fontSize: '24px', fontWeight: '700', marginBottom: '4px' },
-  subtitle: { fontSize: '14px', color: '#888' },
-  addBtn: { padding: '10px 20px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '500' },
-  formBox: { background: 'white', padding: '1.5rem', borderRadius: '10px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '20px' },
-  formTitle: { fontSize: '16px', fontWeight: '600', marginBottom: '16px' },
-  err: { background: '#fee2e2', color: '#dc2626', padding: '10px', borderRadius: '8px', marginBottom: '16px', fontSize: '14px' },
-  form: { display: 'flex', flexDirection: 'column', gap: '12px' },
-  formRow: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' },
-  field: { display: 'flex', flexDirection: 'column', gap: '6px' },
-  label: { fontSize: '13px', fontWeight: '500', color: '#374151' },
-  input: { padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', width: '100%', boxSizing: 'border-box' },
-  formBtns: { display: 'flex', gap: '10px', marginTop: '4px' },
-  saveBtn: { padding: '10px 24px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '500' },
-  cancelBtn: { padding: '10px 24px', background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: '8px', cursor: 'pointer' },
-  filterRow: { display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '16px' },
-  filterLabel: { fontSize: '13px', color: '#888' },
-  filterBtn: { padding: '6px 12px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '20px', cursor: 'pointer', fontSize: '13px' },
-  filterActive: { padding: '6px 12px', background: '#6366f1', color: 'white', border: '1px solid #6366f1', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: '500' },
-  list: { display: 'flex', flexDirection: 'column', gap: '8px' },
-  expRow: { background: 'white', padding: '1rem 1.25rem', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' },
-  emoji: { fontSize: '28px' },
+  page: {
+    maxWidth: '900px',
+    margin: '0 auto',
+    padding: '2rem 1.5rem',
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '1.5rem',
+    flexWrap: 'wrap',
+    gap: '1rem',
+  },
+  title: {
+    fontSize: '24px',
+    fontWeight: '700',
+    color: '#1a1a2e',
+    marginBottom: '4px',
+  },
+  subtitle: {
+    fontSize: '14px',
+    color: '#64748b',
+  },
+  addBtn: {
+    padding: '10px 20px',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+  },
+  cancelTopBtn: {
+    padding: '10px 20px',
+    background: '#f1f5f9',
+    color: '#64748b',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+  },
+  formBox: {
+    background: 'white',
+    padding: '1.5rem',
+    borderRadius: '16px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+    marginBottom: '1.5rem',
+    border: '1px solid #e2e8f0',
+  },
+  formTitle: {
+    fontSize: '16px',
+    fontWeight: '600',
+    marginBottom: '1.25rem',
+    color: '#1a1a2e',
+  },
+  formError: {
+    background: '#fef2f2',
+    color: '#dc2626',
+    padding: '10px 16px',
+    borderRadius: '8px',
+    marginBottom: '1rem',
+    fontSize: '14px',
+    border: '1px solid #fecaca',
+  },
+  formGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '1rem',
+  },
+  field: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+  },
+  label: {
+    fontSize: '13px',
+    fontWeight: '600',
+    color: '#374151',
+  },
+  input: {
+    padding: '10px 14px',
+    border: '1.5px solid #e2e8f0',
+    borderRadius: '8px',
+    fontSize: '14px',
+    background: '#f8fafc',
+    width: '100%',
+    boxSizing: 'border-box',
+  },
+  formBtns: {
+    display: 'flex',
+    gap: '10px',
+    marginTop: '1.25rem',
+  },
+  saveBtn: {
+    padding: '10px 24px',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+  },
+  cancelBtn: {
+    padding: '10px 24px',
+    background: '#f1f5f9',
+    color: '#64748b',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '14px',
+  },
+  filterRow: {
+    display: 'flex',
+    gap: '8px',
+    flexWrap: 'wrap',
+    marginBottom: '1.25rem',
+  },
+  filterBtn: {
+    padding: '7px 14px',
+    background: 'white',
+    border: '1.5px solid #e2e8f0',
+    borderRadius: '20px',
+    cursor: 'pointer',
+    fontSize: '13px',
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  filterActive: {
+    padding: '7px 14px',
+    background: '#6366f1',
+    border: '1.5px solid #6366f1',
+    borderRadius: '20px',
+    cursor: 'pointer',
+    fontSize: '13px',
+    color: 'white',
+    fontWeight: '600',
+  },
+  list: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+  },
+  expCard: {
+    background: 'white',
+    padding: '1rem 1.25rem',
+    borderRadius: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+    border: '1px solid #f1f5f9',
+  },
+  expIcon: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
   expInfo: { flex: 1 },
-  expTitle: { fontSize: '15px', fontWeight: '500', marginBottom: '2px' },
-  expMeta: { fontSize: '12px', color: '#9ca3af' },
-  expAmount: { fontSize: '16px', fontWeight: '700', color: '#1f2937', minWidth: '80px', textAlign: 'right' },
-  actions: { display: 'flex', gap: '8px' },
-  editBtn: { padding: '6px 12px', background: '#eff6ff', color: '#3b82f6', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' },
-  deleteBtn: { padding: '6px 12px', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' },
-  center: { textAlign: 'center', padding: '3rem', color: '#9ca3af' }
+  expTitle: {
+    fontSize: '15px',
+    fontWeight: '600',
+    color: '#1a1a2e',
+    marginBottom: '4px',
+  },
+  expMeta: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  catBadge: {
+    padding: '2px 10px',
+    borderRadius: '20px',
+    fontSize: '12px',
+    fontWeight: '500',
+    textTransform: 'capitalize',
+  },
+  expDate: {
+    fontSize: '12px',
+    color: '#94a3b8',
+  },
+  expAmount: {
+    fontSize: '16px',
+    fontWeight: '700',
+    minWidth: '80px',
+    textAlign: 'right',
+  },
+  actions: {
+    display: 'flex',
+    gap: '6px',
+  },
+  editBtn: {
+    padding: '8px',
+    background: '#eff6ff',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '16px',
+  },
+  deleteBtn: {
+    padding: '8px',
+    background: '#fef2f2',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '16px',
+  },
+  center: {
+    textAlign: 'center',
+    padding: '3rem',
+    color: '#94a3b8',
+    fontSize: '16px',
+  },
+  emptyBox: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: '3rem',
+    gap: '1rem',
+    background: 'white',
+    borderRadius: '16px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+  },
+  emptyEmoji: {
+    fontSize: '48px',
+  },
+  emptyText: {
+    color: '#94a3b8',
+    fontSize: '16px',
+  },
+  retryBtn: {
+    padding: '10px 24px',
+    background: '#6366f1',
+    color: 'white',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+  },
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0,0,0,0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+    padding: '1rem',
+  },
+  modal: {
+    background: 'white',
+    padding: '2rem',
+    borderRadius: '20px',
+    maxWidth: '380px',
+    width: '100%',
+    textAlign: 'center',
+    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+  },
+  modalEmoji: {
+    fontSize: '48px',
+    marginBottom: '1rem',
+  },
+  modalTitle: {
+    fontSize: '20px',
+    fontWeight: '700',
+    color: '#1a1a2e',
+    marginBottom: '8px',
+  },
+  modalSub: {
+    fontSize: '14px',
+    color: '#94a3b8',
+    marginBottom: '1.5rem',
+  },
+  modalBtns: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+  },
+  modalDelete: {
+    padding: '12px',
+    background: '#ef4444',
+    color: 'white',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontSize: '15px',
+    fontWeight: '600',
+  },
+  modalCancel: {
+    padding: '12px',
+    background: '#f1f5f9',
+    color: '#64748b',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontSize: '15px',
+  },
 };
 
 export default Expenses;
