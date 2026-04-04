@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Expenses from './pages/Expenses';
+import Admin from './pages/Admin';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -23,6 +24,9 @@ function App() {
           } />
           <Route path="/expenses" element={
             <ProtectedRoute><Expenses /></ProtectedRoute>
+          } />
+          <Route path="/admin" element={
+            <ProtectedRoute><Admin /></ProtectedRoute>
           } />
           <Route path="/" element={<Navigate to="/dashboard" />} />
         </Routes>
