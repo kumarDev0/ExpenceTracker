@@ -332,7 +332,7 @@ export default function Admin() {
           <div>
             <div style={{ fontSize:11, color:"#7c3aed", fontWeight:700, letterSpacing:"0.14em", textTransform:"uppercase" }}>Admin Panel</div>
             <h1 style={{ margin:"4px 0 0", fontSize:"clamp(22px,5vw,30px)", fontWeight:900, background:"linear-gradient(135deg,#a78bfa,#f472b6)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>
-              Dashboard 🛡️
+               ✨ Welcome to Villain World
             </h1>
           </div>
           <button onClick={fetchAll} style={{ background:"#ffffff0a", border:"1px solid #ffffff15", color:"#a78bfa", padding:"8px 14px", borderRadius:12, cursor:"pointer", fontSize:13, fontWeight:700 }}>
