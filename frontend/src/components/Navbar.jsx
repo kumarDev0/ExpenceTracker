@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+const ADMIN_EMAIL = 'villainxcoding9010@gmail.com';
+
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -13,8 +15,8 @@ const Navbar = () => {
     navigate('/login');
   };
 
-  // Active link check
   const isActive = (path) => location.pathname === path;
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   return (
     <nav style={s.nav}>
@@ -25,19 +27,18 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop links */}
-       <div style={s.desktopLinks} className="desktop-links">
-          <Link
-            to="/dashboard"
-            style={isActive('/dashboard') ? s.linkActive : s.link}
-          >
+        <div style={s.desktopLinks} className="desktop-links">
+          <Link to="/dashboard" style={isActive('/dashboard') ? s.linkActive : s.link}>
             Dashboard
           </Link>
-          <Link
-            to="/expenses"
-            style={isActive('/expenses') ? s.linkActive : s.link}
-          >
+          <Link to="/expenses" style={isActive('/expenses') ? s.linkActive : s.link}>
             Expenses
           </Link>
+          {isAdmin && (
+            <Link to="/admin" style={isActive('/admin') ? s.adminLinkActive : s.adminLink}>
+              🛡️ Admin
+            </Link>
+          )}
         </div>
 
         {/* User info + logout — desktop */}
@@ -55,9 +56,9 @@ const Navbar = () => {
 
         {/* Hamburger — mobile only */}
         <button
-         style={s.hamburger}
-         className="hamburger"
-         onClick={() => setMenuOpen(!menuOpen)}
+          style={s.hamburger}
+          className="hamburger"
+          onClick={() => setMenuOpen(!menuOpen)}
         >
           {menuOpen ? '✕' : '☰'}
         </button>
@@ -66,28 +67,22 @@ const Navbar = () => {
       {/* Mobile menu */}
       {menuOpen && (
         <div style={s.mobileMenu}>
-          <Link
-            to="/dashboard"
-            style={s.mobileLink}
-            onClick={() => setMenuOpen(false)}
-          >
+          <Link to="/dashboard" style={s.mobileLink} onClick={() => setMenuOpen(false)}>
             📊 Dashboard
           </Link>
-          <Link
-            to="/expenses"
-            style={s.mobileLink}
-            onClick={() => setMenuOpen(false)}
-          >
+          <Link to="/expenses" style={s.mobileLink} onClick={() => setMenuOpen(false)}>
             💸 Expenses
           </Link>
-          <div style={s.mobileDivider}/>
+          {isAdmin && (
+            <Link to="/admin" style={s.mobileAdminLink} onClick={() => setMenuOpen(false)}>
+              🛡️ Admin Panel
+            </Link>
+          )}
+          <div style={s.mobileDivider} />
           <div style={s.mobileUser}>
             Hi, {user?.name?.split(' ')[0]} 👋
           </div>
-          <button
-            onClick={handleLogout}
-            style={s.mobileLogout}
-          >
+          <button onClick={handleLogout} style={s.mobileLogout}>
             Logout
           </button>
         </div>
@@ -124,7 +119,6 @@ const s = {
   desktopLinks: {
     display: 'flex',
     gap: '8px',
-    // Mobile pe hide — JS se handle karenge
   },
   link: {
     padding: '8px 16px',
@@ -133,7 +127,6 @@ const s = {
     textDecoration: 'none',
     fontSize: '14px',
     fontWeight: '500',
-    transition: 'all 0.2s',
   },
   linkActive: {
     padding: '8px 16px',
@@ -143,6 +136,25 @@ const s = {
     fontSize: '14px',
     fontWeight: '600',
     background: '#eef2ff',
+  },
+  adminLink: {
+    padding: '8px 16px',
+    borderRadius: '8px',
+    color: '#7c3aed',
+    textDecoration: 'none',
+    fontSize: '14px',
+    fontWeight: '600',
+    background: '#f5f3ff',
+    border: '1px solid #ddd6fe',
+  },
+  adminLinkActive: {
+    padding: '8px 16px',
+    borderRadius: '8px',
+    color: '#fff',
+    textDecoration: 'none',
+    fontSize: '14px',
+    fontWeight: '600',
+    background: '#7c3aed',
   },
   desktopRight: {
     display: 'flex',
@@ -184,7 +196,6 @@ const s = {
     cursor: 'pointer',
     color: '#374151',
     padding: '4px 8px',
-    // Mobile pe show hoga — inline style se
   },
   mobileMenu: {
     background: 'white',
@@ -202,6 +213,16 @@ const s = {
     fontSize: '15px',
     fontWeight: '500',
     background: '#f8fafc',
+  },
+  mobileAdminLink: {
+    padding: '12px 16px',
+    borderRadius: '10px',
+    color: '#7c3aed',
+    textDecoration: 'none',
+    fontSize: '15px',
+    fontWeight: '600',
+    background: '#f5f3ff',
+    border: '1px solid #ddd6fe',
   },
   mobileDivider: {
     height: '1px',
@@ -227,3 +248,4 @@ const s = {
 };
 
 export default Navbar;
+
