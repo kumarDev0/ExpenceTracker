@@ -265,7 +265,7 @@ const Expenses = () => {
         ) : (
           <div style={s.list}>
             {expenses.map(exp => (
-              <div key={exp.id} style={s.expCard}>
+              <div key={exp.id} style={s.expCard} className="exp-card">
                 {/* Icon */}
                 <div style={{
                   ...s.expIcon,
@@ -287,9 +287,7 @@ const Expenses = () => {
                     }}>
                       {exp.category}
                     </span>
-                    <span style={s.expDate}>
-                      {exp.date?.split('T')[0]}
-                    </span>
+                    <span style={s.expDate} className="exp-date"></span>
                   </div>
                 </div>
 
@@ -297,12 +295,12 @@ const Expenses = () => {
                 <p style={{
                   ...s.expAmount,
                   color: COLORS[exp.category]
-                }}>
+                }} className="exp-amount">
                   ₹{parseFloat(exp.amount).toLocaleString()}
                 </p>
 
                 {/* Actions */}
-                <div style={s.actions}>
+                <div style={s.actions} className="exp-actions">
                   <button
                     onClick={() => handleEdit(exp)}
                     style={s.editBtn}

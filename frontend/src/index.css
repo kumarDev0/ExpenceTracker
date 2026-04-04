@@ -83,3 +83,35 @@ textarea:focus {
     border-radius: 20px !important;
   }
 }
+
+/* Navbar fix for small screens */
+@media (max-width: 900px) {
+  .desktop-links {
+    display: none !important;
+  }
+  .desktop-right {
+    display: none !important;
+  }
+  .hamburger {
+    display: block !important;
+  }
+}
+
+/* Expenses page mobile fix */
+@media (max-width: 600px) {
+  .exp-card {
+    padding: 0.75rem !important;
+    gap: 8px !important;
+  }
+  .exp-amount {
+    font-size: 13px !important;
+    min-width: 60px !important;
+  }
+  .exp-date {
+    display: none !important;
+  }
+  .exp-actions {
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+}
